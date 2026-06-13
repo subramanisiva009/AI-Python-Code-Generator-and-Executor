@@ -1,0 +1,50 @@
+import os
+from dotenv import load_dotenv
+from langchain_core.prompts import PromptTemplate
+from langchain_experimental.utilities import PythonREPL
+from langchain_google_genai import ChatGoogleGenerativeAI
+
+load_dotenv()
+
+llm = ChatGoogleGenerativeAI(
+    model="gemini-2.5-flash",
+    google_api_key=os.getenv("GEMINI_APIKEY"),
+    temperature=0
+)
+
+prompt = PromptTemplate(
+    input_variables=["instruction"],
+    template="""
+You are an expert Python developer.
+
+Write clean and valid Python code based on the instruction below.
+
+Return ONLY executable Python code.
+Do not include markdown, explanations, or comments.
+
+Instruction:
+{instruction}
+"""
+)
+
+instruction = "Write a code to find even and odd numbers from an array"
+
+formatted_prompt = prompt.format(
+    instruction=instruction
+)
+
+response = llm.invoke(formatted_prompt)
+
+generated_code = response.content.strip()
+
+print("----- Generated Code -----")
+print(generated_code)
+
+print("\n----- Execution Output -----")
+
+try:
+    repl = PythonREPL()
+    result = repl.run(generated_code)
+    print(result)
+except Exception as e:
+    print("Execution Error:", e)
